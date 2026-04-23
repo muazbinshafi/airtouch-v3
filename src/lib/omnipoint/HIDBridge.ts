@@ -32,8 +32,16 @@ export class HIDBridge {
   }
 
   setUrl(url: string) {
-    this.url = url;
-    this.reconnect();
+    const nextUrl = url.trim();
+    const changed = nextUrl !== this.url;
+    this.url = nextUrl;
+    if (changed) {
+      this.reconnect();
+      return;
+    }
+    if (!this.ws || this.ws.readyState === WebSocket.CLOSED || this.ws.readyState === WebSocket.CLOSING) {
+      this.connect();
+    }
   }
 
   emergencyStop() {
@@ -65,24 +73,43 @@ export class HIDBridge {
       this.scheduleReconnect();
       return;
     }
-    this.ws.onopen = () => {
+    const socket = this.ws;
+    socket.onopen = () => {
+      if (this.ws !== socket) return;
       this.backoff = 250;
-      TelemetryStore.set({ wsState: "connected" });
+      TelemetryStore.set({
+        wsState: "connected",
+        bridgeProbe: "ok",
+        bridgeValidated: true,
+        bridgeProbeMsg: "Live bridge connected",
+      });
       if (this.heartbeatTimer) window.clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = window.setInterval(() => {
-        if (this.ws?.readyState === WebSocket.OPEN) {
-          this.ws.send(JSON.stringify({ event: "heartbeat", timestamp: Date.now() }));
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ event: "heartbeat", timestamp: Date.now() }));
         }
       }, 5000);
     };
-    this.ws.onclose = () => {
-      TelemetryStore.set({ wsState: "disconnected" });
+    socket.onclose = (event) => {
+      if (this.ws !== socket) return;
+      this.ws = null;
       if (this.heartbeatTimer) window.clearInterval(this.heartbeatTimer);
+      if (this.stopped) {
+        TelemetryStore.set({ wsState: "stopped" });
+        return;
+      }
+      TelemetryStore.set({
+        wsState: "disconnected",
+        bridgeValidated: false,
+        bridgeProbeMsg: `Closed (${event.code || 1005})`,
+        bridgeProbeRttMs: 0,
+      });
       this.scheduleReconnect();
     };
-    this.ws.onerror = () => {
+    socket.onerror = () => {
+      if (this.ws !== socket) return;
       try {
-        this.ws?.close();
+        socket.close();
       } catch {
         /* noop */
       }
@@ -148,6 +175,8 @@ export class HIDBridge {
     const start = performance.now();
     return await new Promise((resolve) => {
       let ws: WebSocket;
+      let settled = false;
+      let optimisticSuccessTimer: number | null = null;
       try {
         ws = new WebSocket(url);
       } catch (e) {
@@ -161,9 +190,22 @@ export class HIDBridge {
         return;
       }
       const finish = (ok: boolean, message: string) => {
+        if (settled) return;
+        settled = true;
         window.clearTimeout(timer);
+        if (optimisticSuccessTimer) window.clearTimeout(optimisticSuccessTimer);
         const rttMs = Math.round(performance.now() - start);
-        try { ws.close(); } catch { /* noop */ }
+        ws.onopen = null;
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onmessage = null;
+        try {
+          if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+            ws.close(1000, ok ? "probe_complete" : "probe_failed");
+          }
+        } catch {
+          /* noop */
+        }
         TelemetryStore.set({
           bridgeProbe: ok ? "ok" : "failed",
           bridgeValidated: ok,
@@ -180,12 +222,27 @@ export class HIDBridge {
         try {
           ws.send(JSON.stringify({ event: "ping", timestamp: Date.now() }));
         } catch { /* noop */ }
-        // Treat a successful open as a valid bridge; pong is best-effort.
+        optimisticSuccessTimer = window.setTimeout(() => finish(true, "Bridge reachable"), 120);
+      };
+      ws.onmessage = (event) => {
+        if (typeof event.data !== "string") {
+          finish(true, "Bridge reachable");
+          return;
+        }
+        try {
+          const payload = JSON.parse(event.data) as { type?: string };
+          if (payload.type === "pong") {
+            finish(true, "Bridge reachable");
+            return;
+          }
+        } catch {
+          /* noop */
+        }
         finish(true, "Bridge reachable");
       };
       ws.onerror = () => finish(false, "Connection refused");
       ws.onclose = (ev) => {
-        if (ev.code !== 1000) finish(false, `Closed (${ev.code})`);
+        if (!settled && ev.code !== 1000) finish(false, `Closed (${ev.code || 1005})`);
       };
     });
   }
