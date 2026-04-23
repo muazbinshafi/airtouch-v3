@@ -115,6 +115,7 @@ export function BridgeTroubleshooter({ open, onClose, bridgeUrl, onTestBridge }:
   };
 
   const probeFailed = checks.find((c) => c.id === "probe")?.state === "fail";
+  const liveStreamOffline = t.bridgeValidated && t.wsState !== "connected";
 
   return (
     <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
@@ -176,9 +177,11 @@ export function BridgeTroubleshooter({ open, onClose, bridgeUrl, onTestBridge }:
           </button>
         </div>
 
-        {probeFailed && (
+        {(probeFailed || liveStreamOffline) && (
           <div className="p-4 border-b hairline">
-            <div className="font-mono text-[10px] text-destructive tracking-[0.25em] mb-2">⚠ HANDSHAKE FAILED — LIKELY CAUSES</div>
+            <div className="font-mono text-[10px] text-destructive tracking-[0.25em] mb-2">
+              ⚠ {probeFailed ? "HANDSHAKE FAILED" : "LIVE STREAM OFFLINE"} — LIKELY CAUSES
+            </div>
             <ol className="font-mono text-[11px] text-muted-foreground space-y-2 leading-relaxed list-decimal list-inside">
               <li>
                 <span className="text-foreground">The Python bridge daemon isn't running.</span> The web app
@@ -195,6 +198,9 @@ export function BridgeTroubleshooter({ open, onClose, bridgeUrl, onTestBridge }:
                 If the bridge says connected but the pointer does not move, run <span className="text-primary">ls -l /dev/uinput</span>
                 and ensure your user can open that device.
               </li>
+              {liveStreamOffline && (
+                <li>
+                  <span className="text-foreground">Probe works, but the persistent stream dropped.</span> Click{
               <li>
                 <span className="text-foreground">Browser blocks ws:// from https://.</span> Mixed-content
                 policy blocks insecure WebSockets from secure pages. Open the app from{" "}
