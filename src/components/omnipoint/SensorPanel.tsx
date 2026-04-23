@@ -47,7 +47,7 @@ export function SensorPanel({ onSetOrigin }: Props) {
       </div>
       <div className="flex items-center gap-2 border-t hairline p-2">
         <button
-          onClick={_props.onSetOrigin}
+          onClick={onSetOrigin}
           className="font-mono text-[11px] tracking-[0.2em] px-3 h-8 border border-primary/60 text-primary hover:bg-primary/10"
         >
           ◎ SET ORIGIN
@@ -58,7 +58,7 @@ export function SensorPanel({ onSetOrigin }: Props) {
       </div>
     </section>
   );
-});
+}
 
 function CornerBrackets() {
   const cls = "absolute w-5 h-5 border-primary/70";
