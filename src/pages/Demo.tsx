@@ -4,6 +4,7 @@ import { InitScreen } from "@/components/omnipoint/InitScreen";
 import { StatusBar } from "@/components/omnipoint/StatusBar";
 import { SensorPanel } from "@/components/omnipoint/SensorPanel";
 import { TelemetryPanel } from "@/components/omnipoint/TelemetryPanel";
+import { BridgeTroubleshooter } from "@/components/omnipoint/BridgeTroubleshooter";
 import { GestureEngine, defaultConfig, type EngineConfig } from "@/lib/omnipoint/GestureEngine";
 import { HIDBridge } from "@/lib/omnipoint/HIDBridge";
 import { TelemetryStore } from "@/lib/omnipoint/TelemetryStore";
