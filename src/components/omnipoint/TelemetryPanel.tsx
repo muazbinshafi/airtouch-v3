@@ -26,7 +26,7 @@ export function TelemetryPanel({ config, setConfig, bridgeUrl, setBridgeUrl, onR
     : probe === "probing" ? "bg-yellow-400 animate-pulse"
     : "bg-muted-foreground/50";
   return (
-    <aside className="flex flex-col panel w-[360px] shrink-0">
+    <aside className="flex flex-col panel w-[360px] shrink-0 overflow-y-auto">
       <div className="flex items-center justify-between border-b hairline px-3 h-9">
         <div className="font-mono text-[11px] tracking-[0.25em] text-emerald-glow">
           TELEMETRY // CTRL
