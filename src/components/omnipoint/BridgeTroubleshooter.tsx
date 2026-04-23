@@ -84,7 +84,7 @@ export function BridgeTroubleshooter({ open, onClose, bridgeUrl, onTestBridge }:
     setChecks([...results]);
     if (parsed && results[1].state === "pass") {
       await onTestBridge();
-      const snap = (await import("@/lib/omnipoint/TelemetryStore")).TelemetryStore.get();
+      const snap = TelemetryStore.get();
       if (snap.bridgeProbe === "ok") {
         results[3] = { ...results[3], state: "pass", detail: `${snap.bridgeProbeMsg} · ${snap.bridgeProbeRttMs}ms` };
       } else {
