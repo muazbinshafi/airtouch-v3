@@ -12,6 +12,11 @@ Packet format (JSON):
   { "type": "up",     "button": "left" }
   { "type": "scroll", "dx": int, "dy": int }
   { "type": "ping" }                           -> replies { "type": "pong" }
+  { "type": "status" }                         -> replies { "type": "status", ... }
+  { "event": "subscribe", "channel": "motion" }-> ack { "type": "subscribed", "channel": ... }
+
+HTTP fallback:
+  GET /status (on the same port) returns the same status payload as JSON.
 
 Run:
   sudo modprobe uinput
@@ -23,19 +28,26 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import sys
+from http import HTTPStatus
 from typing import Any
 
 try:
     import websockets
+    from websockets.http import Headers  # type: ignore
 except ImportError:
     sys.exit("Missing dependency: pip install websockets")
 
 try:
     from evdev import UInput, ecodes as e
+    EVDEV_AVAILABLE = True
 except ImportError:
-    sys.exit("Missing dependency: pip install evdev")
+    EVDEV_AVAILABLE = False
+    UInput = None  # type: ignore
+    e = None       # type: ignore
 
+VERSION = "1.1.0"
 log = logging.getLogger("omnipoint-bridge")
 
 
@@ -52,8 +64,28 @@ def screen_size() -> tuple[int, int]:
 SCREEN_W, SCREEN_H = screen_size()
 
 
+def detect_session() -> dict[str, Any]:
+    """Detect Wayland vs X11 + uinput device permissions."""
+    session_type = os.environ.get("XDG_SESSION_TYPE", "unknown")
+    wayland_display = os.environ.get("WAYLAND_DISPLAY")
+    x_display = os.environ.get("DISPLAY")
+    uinput_path = "/dev/uinput"
+    uinput_exists = os.path.exists(uinput_path)
+    uinput_writable = uinput_exists and os.access(uinput_path, os.R_OK | os.W_OK)
+    return {
+        "session_type": session_type,
+        "wayland": bool(wayland_display) or session_type == "wayland",
+        "x11": bool(x_display) or session_type == "x11",
+        "uinput_path": uinput_path,
+        "uinput_exists": uinput_exists,
+        "uinput_writable": uinput_writable,
+    }
+
+
 class LinuxMouseBridge:
     def __init__(self) -> None:
+        if not EVDEV_AVAILABLE:
+            sys.exit("Missing dependency: pip install evdev")
         capabilities = {
             e.EV_KEY: [e.BTN_LEFT, e.BTN_RIGHT],
             e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL, e.REL_HWHEEL],
@@ -122,6 +154,28 @@ mouse = LinuxMouseBridge()
 log.info("Screen size: %dx%d", SCREEN_W, SCREEN_H)
 
 
+def status_payload() -> dict[str, Any]:
+    sess = detect_session()
+    return {
+        "type": "status",
+        "version": VERSION,
+        "ok": True,
+        "evdev": EVDEV_AVAILABLE,
+        "uinput": sess["uinput_writable"],
+        "uinput_path": sess["uinput_path"],
+        "uinput_exists": sess["uinput_exists"],
+        "session_type": sess["session_type"],
+        "wayland": sess["wayland"],
+        "x11": sess["x11"],
+        "screen": {"w": SCREEN_W, "h": SCREEN_H},
+        "message": (
+            "Daemon ready"
+            if sess["uinput_writable"]
+            else "Daemon up but cannot open /dev/uinput — fix device permissions"
+        ),
+    }
+
+
 def handle_packet(pkt: dict[str, Any]) -> dict[str, Any] | None:
     # Accept both schemas:
     #   1. {"type": "...", ...}                       (native daemon protocol)
@@ -130,14 +184,18 @@ def handle_packet(pkt: dict[str, Any]) -> dict[str, Any] | None:
     data = pkt.get("data") if isinstance(pkt.get("data"), dict) else pkt
 
     if t == "ping":
-        return {"type": "pong"}
+        return {"type": "pong", "timestamp": pkt.get("timestamp")}
+    if t == "status":
+        return status_payload()
+    if t == "subscribe":
+        return {"type": "subscribed", "channel": pkt.get("channel", "motion")}
     if t == "heartbeat":
-        return None
+        # Web heartbeats may carry type:ping — reply with pong if so.
+        return {"type": "pong", "timestamp": pkt.get("timestamp")}
     if t in ("move", "motion"):
         x = max(0.0, min(1.0, float(data.get("x", 0))))
         y = max(0.0, min(1.0, float(data.get("y", 0))))
         mouse.move_abs(x, y)
-        # Map gesture-driven press/release if the web app included one.
         gesture = data.get("gesture")
         if gesture in ("pinch", "click", "drag"):
             mouse.button_down("left")
@@ -181,9 +239,27 @@ async def session(ws):
         log.info("Client disconnected: %s", peer)
 
 
+async def http_status_handler(path: str, request_headers):
+    """Serve GET /status as a plain HTTP response on the same port."""
+    if path == "/status":
+        body = json.dumps(status_payload()).encode("utf-8")
+        headers = [
+            ("Content-Type", "application/json"),
+            ("Access-Control-Allow-Origin", "*"),
+            ("Cache-Control", "no-store"),
+            ("Content-Length", str(len(body))),
+        ]
+        return HTTPStatus.OK, headers, body
+    if path == "/":
+        body = b"OmniPoint bridge running. Use ws:// to connect or GET /status."
+        return HTTPStatus.OK, [("Content-Type", "text/plain"), ("Content-Length", str(len(body)))], body
+    return None  # let websockets handle the upgrade
+
+
 async def main_async(host: str, port: int) -> None:
     log.info("OmniPoint bridge listening on ws://%s:%d", host, port)
-    async with websockets.serve(session, host, port):
+    log.info("Session: %s", detect_session())
+    async with websockets.serve(session, host, port, process_request=http_status_handler):
         await asyncio.Future()  # run forever
 
 

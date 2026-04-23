@@ -208,6 +208,7 @@ const Demo = () => {
           open={troubleshooterOpen}
           onClose={() => setTroubleshooterOpen(false)}
           bridgeUrl={bridgeUrl}
+          setBridgeUrl={setBridgeUrl}
           onTestBridge={handleTestBridge}
         />
       </main>

@@ -1,5 +1,6 @@
 import { useTelemetry } from "@/hooks/useTelemetry";
 import type { EngineConfig } from "@/lib/omnipoint/GestureEngine";
+import { BridgeLogPanel } from "@/components/omnipoint/BridgeLogPanel";
 
 interface Props {
   config: EngineConfig;
@@ -25,7 +26,7 @@ export function TelemetryPanel({ config, setConfig, bridgeUrl, setBridgeUrl, onR
     : probe === "probing" ? "bg-yellow-400 animate-pulse"
     : "bg-muted-foreground/50";
   return (
-    <aside className="flex flex-col panel w-[360px] shrink-0">
+    <aside className="flex flex-col panel w-[360px] shrink-0 overflow-y-auto">
       <div className="flex items-center justify-between border-b hairline px-3 h-9">
         <div className="font-mono text-[11px] tracking-[0.25em] text-emerald-glow">
           TELEMETRY // CTRL
@@ -146,6 +147,11 @@ export function TelemetryPanel({ config, setConfig, bridgeUrl, setBridgeUrl, onR
         <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
           Run <span className="text-foreground">bridge/omnipoint_bridge.py</span> on your local machine to enable system-wide cursor control.
         </p>
+      </div>
+
+      <div className="p-3 border-b hairline">
+        <SectionTitle>CONNECTION LOG</SectionTitle>
+        <BridgeLogPanel height="max-h-48" />
       </div>
 
       <div className="p-3 mt-auto">
