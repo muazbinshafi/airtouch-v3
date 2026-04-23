@@ -182,6 +182,7 @@ const Demo = () => {
             setBridgeUrl={setBridgeUrl}
             onReconnect={handleReconnect}
             onTestBridge={handleTestBridge}
+            onOpenTroubleshooter={() => setTroubleshooterOpen(true)}
           />
         </div>
         {showInit && (
@@ -203,9 +204,15 @@ const Demo = () => {
             />
           </div>
         )}
+        <BridgeTroubleshooter
+          open={troubleshooterOpen}
+          onClose={() => setTroubleshooterOpen(false)}
+          bridgeUrl={bridgeUrl}
+          onTestBridge={handleTestBridge}
+        />
       </main>
     ),
-    [showInit, status, progress, error, initialize, initializing, config, setConfig, bridgeUrl, handleEmergencyToggle, handleReconnect, handleSetOrigin, handleTestBridge],
+    [showInit, status, progress, error, initialize, initializing, config, setConfig, bridgeUrl, handleEmergencyToggle, handleReconnect, handleSetOrigin, handleTestBridge, troubleshooterOpen],
   );
 };
 
