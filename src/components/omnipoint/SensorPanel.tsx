@@ -1,18 +1,15 @@
-import { forwardRef } from "react";
 import { useTelemetry } from "@/hooks/useTelemetry";
 
 interface Props {
   onSetOrigin: () => void;
 }
 
-export const SensorPanel = forwardRef<
-  { video: HTMLVideoElement | null; canvas: HTMLCanvasElement | null },
-  Props
->(function SensorPanel(_props, _ref) {
-  // Refs are wired externally via querySelector ids to keep the parent clean.
+export function SensorPanel({ onSetOrigin }: Props) {
+  // Video/canvas refs are wired externally via DOM ids to keep the parent clean.
   const t = useTelemetry();
   return (
     <section className="flex flex-col panel">
+
       <div className="flex items-center justify-between border-b hairline px-3 h-9">
         <div className="font-mono text-[11px] tracking-[0.25em] text-emerald-glow">
           SENSOR INPUT // CAM_00
