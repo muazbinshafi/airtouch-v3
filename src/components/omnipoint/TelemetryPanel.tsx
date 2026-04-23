@@ -8,9 +8,10 @@ interface Props {
   setBridgeUrl: (url: string) => void;
   onReconnect: () => void;
   onTestBridge: () => void;
+  onOpenTroubleshooter: () => void;
 }
 
-export function TelemetryPanel({ config, setConfig, bridgeUrl, setBridgeUrl, onReconnect, onTestBridge }: Props) {
+export function TelemetryPanel({ config, setConfig, bridgeUrl, setBridgeUrl, onReconnect, onTestBridge, onOpenTroubleshooter }: Props) {
   const t = useTelemetry();
   const probe = t.bridgeProbe;
   const probeColor =
