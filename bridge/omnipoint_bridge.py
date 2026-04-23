@@ -139,9 +139,15 @@ def handle_packet(pkt: dict[str, Any]) -> dict[str, Any] | None:
         mouse.move_abs(x, y)
         # Map gesture-driven press/release if the web app included one.
         gesture = data.get("gesture")
-        if gesture == "pinch":
+        if gesture in ("pinch", "click", "drag"):
             mouse.button_down("left")
-        elif gesture in ("release", "open", "idle"):
+        elif gesture == "scroll_up":
+            mouse.scroll(0, 1)
+            mouse.button_up("left")
+        elif gesture == "scroll_down":
+            mouse.scroll(0, -1)
+            mouse.button_up("left")
+        elif gesture in ("release", "open", "idle", "none"):
             mouse.button_up("left")
     elif t == "click":
         mouse.click(data.get("button", "left"))
