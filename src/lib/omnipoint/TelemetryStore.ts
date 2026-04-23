@@ -11,8 +11,8 @@ export interface TelemetrySnapshot {
   confidence: number;
   packetsPerSec: number;
   gesture: GestureKind;
-  cursorX: number;
-  cursorY: number;
+  cursorX: number; // 0..1
+  cursorY: number; // 0..1
   wsState: WSState;
   bridgeUrl: string;
   emergencyStop: boolean;
@@ -53,9 +53,7 @@ function emit() {
 export const TelemetryStore = {
   subscribe(cb: () => void) {
     listeners.add(cb);
-    return () => {
-      listeners.delete(cb);
-    };
+    return () => listeners.delete(cb);
   },
   get(): TelemetrySnapshot {
     return snapshot;

@@ -108,7 +108,9 @@ export class HIDBridge {
 
   send(payload: MotionPayload) {
     if (this.stopped) return;
+    // Gate HID emission until the bridge has been validated by the operator.
     if (!TelemetryStore.get().bridgeValidated) return;
+    // Track packets/sec regardless of connection state
     this.packetCounter += 1;
     const now = performance.now();
     if (now - this.packetWindowStart >= 1000) {
@@ -132,6 +134,11 @@ export class HIDBridge {
     return this.offlineLog;
   }
 
+  /**
+   * Probe the configured WebSocket endpoint to confirm the local HID bridge
+   * is reachable. Resolves with a status the UI can present to the operator.
+   * Times out after `timeoutMs` to avoid hanging the UX on dead endpoints.
+   */
   async probe(timeoutMs = 2500): Promise<{ ok: boolean; rttMs: number; message: string }> {
     const url = this.url;
     TelemetryStore.set({
@@ -173,6 +180,7 @@ export class HIDBridge {
         try {
           ws.send(JSON.stringify({ event: "ping", timestamp: Date.now() }));
         } catch { /* noop */ }
+        // Treat a successful open as a valid bridge; pong is best-effort.
         finish(true, "Bridge reachable");
       };
       ws.onerror = () => finish(false, "Connection refused");
