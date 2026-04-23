@@ -8,9 +8,10 @@ interface Props {
   setBridgeUrl: (url: string) => void;
   onReconnect: () => void;
   onTestBridge: () => void;
+  onOpenTroubleshooter: () => void;
 }
 
-export function TelemetryPanel({ config, setConfig, bridgeUrl, setBridgeUrl, onReconnect, onTestBridge }: Props) {
+export function TelemetryPanel({ config, setConfig, bridgeUrl, setBridgeUrl, onReconnect, onTestBridge, onOpenTroubleshooter }: Props) {
   const t = useTelemetry();
   const probe = t.bridgeProbe;
   const probeColor =
@@ -133,12 +134,17 @@ export function TelemetryPanel({ config, setConfig, bridgeUrl, setBridgeUrl, onR
           <div className="mt-2 p-2 border border-destructive/50 bg-destructive/10">
             <p className="font-mono text-[10px] leading-relaxed text-destructive">
               ⚠ OS cursor control is OFF. Camera tracking runs, but no mouse events are sent.
-              <br />→ Click <span className="font-bold underline">◉ TEST BRIDGE</span> above to enable.
             </p>
+            <button
+              onClick={onOpenTroubleshooter}
+              className="mt-2 w-full h-7 font-mono text-[10px] tracking-[0.25em] border border-destructive/60 text-destructive hover:bg-destructive/20"
+            >
+              ⚙ OPEN TROUBLESHOOTER
+            </button>
           </div>
         )}
         <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
-          Run <span className="text-foreground">bridge/omnipoint_bridge.py</span> on your Linux box to enable system-wide cursor control.
+          Run <span className="text-foreground">bridge/omnipoint_bridge.py</span> on your local machine to enable system-wide cursor control.
         </p>
       </div>
 

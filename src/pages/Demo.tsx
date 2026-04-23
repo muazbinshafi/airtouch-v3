@@ -4,6 +4,7 @@ import { InitScreen } from "@/components/omnipoint/InitScreen";
 import { StatusBar } from "@/components/omnipoint/StatusBar";
 import { SensorPanel } from "@/components/omnipoint/SensorPanel";
 import { TelemetryPanel } from "@/components/omnipoint/TelemetryPanel";
+import { BridgeTroubleshooter } from "@/components/omnipoint/BridgeTroubleshooter";
 import { GestureEngine, defaultConfig, type EngineConfig } from "@/lib/omnipoint/GestureEngine";
 import { HIDBridge } from "@/lib/omnipoint/HIDBridge";
 import { TelemetryStore } from "@/lib/omnipoint/TelemetryStore";
@@ -14,6 +15,7 @@ const Demo = () => {
   const [status, setStatus] = useState("Awaiting operator input...");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [troubleshooterOpen, setTroubleshooterOpen] = useState(false);
 
   const [config, setConfigState] = useState<EngineConfig>(defaultConfig);
   const [bridgeUrl, setBridgeUrl] = useState("ws://localhost:8765");
@@ -180,6 +182,7 @@ const Demo = () => {
             setBridgeUrl={setBridgeUrl}
             onReconnect={handleReconnect}
             onTestBridge={handleTestBridge}
+            onOpenTroubleshooter={() => setTroubleshooterOpen(true)}
           />
         </div>
         {showInit && (
@@ -201,9 +204,15 @@ const Demo = () => {
             />
           </div>
         )}
+        <BridgeTroubleshooter
+          open={troubleshooterOpen}
+          onClose={() => setTroubleshooterOpen(false)}
+          bridgeUrl={bridgeUrl}
+          onTestBridge={handleTestBridge}
+        />
       </main>
     ),
-    [showInit, status, progress, error, initialize, initializing, config, setConfig, bridgeUrl, handleEmergencyToggle, handleReconnect, handleSetOrigin, handleTestBridge],
+    [showInit, status, progress, error, initialize, initializing, config, setConfig, bridgeUrl, handleEmergencyToggle, handleReconnect, handleSetOrigin, handleTestBridge, troubleshooterOpen],
   );
 };
 
