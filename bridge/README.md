@@ -40,7 +40,5 @@ JSON over WebSocket. See top of `omnipoint_bridge.py` for the full packet spec.
 
 ## Platform notes
 
-- **Linux (X11 / Wayland)** — fully supported via `pynput` + `uinput`.
-- **macOS** — `pynput` works but you must grant Accessibility permission
-  (System Settings → Privacy & Security → Accessibility) to your terminal.
-- **Windows** — `pynput` works out of the box; no extra setup.
+- **Linux (X11 / Wayland)** — supported via `evdev` + `/dev/uinput`; if the socket connects but the pointer does not move, verify `ls -l /dev/uinput` and add your user to the input group if needed.
+- **macOS / Windows** — this bundled bridge is Linux-focused; use a platform-specific input backend before expecting OS cursor injection there.

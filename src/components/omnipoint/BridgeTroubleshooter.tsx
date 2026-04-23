@@ -190,8 +190,10 @@ export function BridgeTroubleshooter({ open, onClose, bridgeUrl, onTestBridge }:
                 <span className="text-foreground">--port</span>, update the endpoint above.
               </li>
               <li>
-                <span className="text-foreground">Firewall / loopback blocked.</span> macOS may prompt; allow
-                Python to accept incoming connections.
+                <span className="text-foreground">Linux input device permissions.</span> A live socket is not
+                enough — the daemon also needs access to <span className="text-primary">/dev/uinput</span>.
+                If the bridge says connected but the pointer does not move, run <span className="text-primary">ls -l /dev/uinput</span>
+                and ensure your user can open that device.
               </li>
               <li>
                 <span className="text-foreground">Browser blocks ws:// from https://.</span> Mixed-content
@@ -223,11 +225,18 @@ pip install -r requirements.txt`}
               <pre className="font-mono text-[11px] bg-input border border-border p-3 overflow-x-auto text-foreground">
 {`sudo modprobe uinput`}
               </pre>
+
+              <div className="font-mono text-[10px] text-muted-foreground mb-1 mt-3">3 · Linux: verify device access</div>
+              <pre className="font-mono text-[11px] bg-input border border-border p-3 overflow-x-auto text-foreground">
+{`ls -l /dev/uinput
+groups
+getent group input`}
+              </pre>
             </>
           )}
 
           <div className="font-mono text-[10px] text-muted-foreground mb-1 mt-3">
-            {os === "linux" ? "3" : "2"} · Run the daemon
+            {os === "linux" ? "4" : "2"} · Run the daemon
           </div>
           <pre className="font-mono text-[11px] bg-input border border-border p-3 overflow-x-auto text-foreground">
 {`python3 omnipoint_bridge.py --host 127.0.0.1 --port 8765`}
