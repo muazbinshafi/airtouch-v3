@@ -42,6 +42,7 @@ function Header() {
         </Link>
         <nav className="hidden sm:flex items-center gap-6 font-mono text-[11px] tracking-[0.25em] text-muted-foreground">
           <a href="#gestures" className="hover:text-foreground transition-colors">GESTURES</a>
+          <Link to="/guide" className="hover:text-foreground transition-colors">GUIDE</Link>
           <a href="#architecture" className="hover:text-foreground transition-colors">ARCH</a>
           <a href="#quickstart" className="hover:text-foreground transition-colors">QUICKSTART</a>
         </nav>
