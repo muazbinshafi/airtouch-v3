@@ -15,6 +15,7 @@ const Demo = () => {
   const [status, setStatus] = useState("Awaiting operator input...");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [troubleshooterOpen, setTroubleshooterOpen] = useState(false);
 
   const [config, setConfigState] = useState<EngineConfig>(defaultConfig);
   const [bridgeUrl, setBridgeUrl] = useState("ws://localhost:8765");
