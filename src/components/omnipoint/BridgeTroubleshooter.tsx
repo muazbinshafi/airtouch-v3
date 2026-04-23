@@ -200,7 +200,11 @@ export function BridgeTroubleshooter({ open, onClose, bridgeUrl, onTestBridge }:
               </li>
               {liveStreamOffline && (
                 <li>
-                  <span className="text-foreground">Probe works, but the persistent stream dropped.</span> Click{
+                  <span className="text-foreground">Probe works, but the persistent stream dropped.</span> Click{" "}
+                  <span className="text-primary">RECONNECT</span> once. If it drops again, restart the daemon and
+                  make sure nothing else is binding or proxying port <span className="text-primary">8765</span>.
+                </li>
+              )}
               <li>
                 <span className="text-foreground">Browser blocks ws:// from https://.</span> Mixed-content
                 policy blocks insecure WebSockets from secure pages. Open the app from{" "}
