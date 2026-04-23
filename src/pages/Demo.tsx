@@ -134,8 +134,8 @@ const Demo = () => {
 
   const handleReconnect = useCallback(() => {
     if (!bridgeRef.current) return;
-    bridgeRef.current.setUrl(bridgeUrl);
     bridgeRef.current.invalidate();
+    bridgeRef.current.setUrl(bridgeUrl);
   }, [bridgeUrl]);
 
   const handleTestBridge = useCallback(async () => {
