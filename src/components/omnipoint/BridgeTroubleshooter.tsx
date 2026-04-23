@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTelemetry } from "@/hooks/useTelemetry";
+import { TelemetryStore } from "@/lib/omnipoint/TelemetryStore";
 
 interface Props {
   open: boolean;
